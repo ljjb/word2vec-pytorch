@@ -28,7 +28,7 @@ class DataReader:
     def read_words(self, min_count):
         word_frequency = dict()
         for line in open(self.inputFileName, encoding="utf8"):
-            line = line.split()
+            line = list(line)
             if len(line) > 1:
                 self.sentences_count += 1
                 for word in line:
@@ -85,13 +85,13 @@ class Word2vecDataset(Dataset):
 
     def __getitem__(self, idx):
         while True:
-            line = self.input_file.readline()
+            line = list(self.input_file.readline().rstrip())
             if not line:
                 self.input_file.seek(0, 0)
-                line = self.input_file.readline()
+                line = list(self.input_file.readline().rstrip())
 
             if len(line) > 1:
-                words = line.split()
+                words = line
 
                 if len(words) > 1:
                     word_ids = [self.data.word2id[w] for w in words if

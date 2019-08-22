@@ -3,3 +3,8 @@ __pycache__/*
 
 
 \.idea/*
+
+full.txt
+out.vec
+partial.txt
+tiny.txt
