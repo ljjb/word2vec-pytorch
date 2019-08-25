@@ -8,3 +8,5 @@ full.txt
 out.vec
 partial.txt
 tiny.txt
+*.bin
+corpus.txt

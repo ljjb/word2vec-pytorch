@@ -50,9 +50,11 @@ class DataReader:
         print("Total embeddings: " + str(len(self.word2id)))
 
     def initTableDiscards(self):
-        t = 0.0001
+        t = 0.001
         f = np.array(list(self.word_frequency.values())) / self.token_count
-        self.discards = np.sqrt(t / f) + (t / f)
+        self.discards = np.clip(0.5 * ((t / f) + np.sqrt(t / f)), 0, 1)
+        total_discard_chance = sum(f * self.discards)
+        print("TOTAL KEEP-IN CHANCE: {}".format(total_discard_chance))
 
     def initTableNegatives(self):
         pow_frequency = np.array(list(self.word_frequency.values())) ** 0.5

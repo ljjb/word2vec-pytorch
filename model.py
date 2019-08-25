@@ -28,17 +28,23 @@ class SkipGramModel(nn.Module):
         emb_neg_v = self.v_embeddings(neg_v)
 
         score = torch.sum(torch.mul(emb_u, emb_v), dim=1)
-        score = torch.clamp(score, max=10, min=-10)
+        # score = torch.clamp(score, max=10, min=-10)
         score = -F.logsigmoid(score)
+          
+        batch_size = emb_u.size()[0]
 
-        neg_score = torch.bmm(emb_neg_v, emb_u.unsqueeze(2)).squeeze()
-        neg_score = torch.clamp(neg_score, max=10, min=-10)
+        # neg_score_a = torch.bmm(emb_neg_v, emb_u.unsqueeze(2)).squeeze()
+        neg_score = (emb_neg_v * emb_u.view(batch_size, 1, -1)).sum(dim=2)
+        # discrepancy = (neg_score_a - neg_score_b).squeeze().sum(dim=0)
+        # print("DISCREPANCY: {}".format(discrepancy))
+        
+        # neg_score = torch.clamp(neg_score, max=10, min=-10)
         neg_score = -torch.sum(F.logsigmoid(-neg_score), dim=1)
 
         return torch.mean(score + neg_score)
 
     def save_embedding(self, id2word, file_name):
-        embedding = self.u_embeddings.weight.cpu().data.numpy()
+        embedding = self.v_embeddings.weight.cpu().data.numpy()
         with open(file_name, 'w') as f:
             f.write('%d %d\n' % (len(id2word), self.emb_dimension))
             for wid, w in id2word.items():

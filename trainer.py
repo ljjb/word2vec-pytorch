@@ -8,8 +8,8 @@ from model import SkipGramModel
 
 
 class Word2VecTrainer:
-    def __init__(self, input_file, output_file, emb_dimension=300, batch_size=128, window_size=5, iterations=3,
-                 initial_lr=0.05, min_count=12):
+    def __init__(self, input_file, output_file, emb_dimension=300, batch_size=64, window_size=5, iterations=5,
+                 initial_lr=1.0, min_count=5):
 
         self.data = DataReader(input_file, min_count)
         dataset = Word2vecDataset(self.data, window_size)
@@ -37,8 +37,8 @@ class Word2VecTrainer:
         for iteration in range(self.iterations):
 
             print("\n\n\nIteration: " + str(iteration + 1))
-            optimizer = optim.SparseAdam(self.skip_gram_model.parameters(), lr=self.initial_lr)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(self.dataloader))
+            optimizer = optim.SGD(self.skip_gram_model.parameters(), lr=self.initial_lr)
+            # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(self.dataloader))
 
             running_loss = 0.0
             for i, sample_batched in enumerate(tqdm(self.dataloader)):
@@ -48,19 +48,20 @@ class Word2VecTrainer:
                     pos_v = sample_batched[1].to(self.device)
                     neg_v = sample_batched[2].to(self.device)
 
-                    scheduler.step()
+                    # scheduler.step()
                     optimizer.zero_grad()
                     loss = self.skip_gram_model.forward(pos_u, pos_v, neg_v)
                     loss.backward()
                     optimizer.step()
 
-                    running_loss = running_loss * 0.9 + loss.item() * 0.1
-                    if i > 0 and i % 500 == 0:
+                    running_loss = running_loss * 0.95 + loss.item() * 0.05
+                    if i > 0 and i % 400 == 0:
                         print(" Loss: " + str(running_loss))
 
-            self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)
+            self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name.format(iteration))
+            self.initial_lr *= 0.7
 
 
 if __name__ == '__main__':
-    w2v = Word2VecTrainer(input_file="partial.txt", output_file="out.vec")
+    w2v = Word2VecTrainer(input_file="corpus.txt", output_file="pw2v-{}.bin")
     w2v.train()
